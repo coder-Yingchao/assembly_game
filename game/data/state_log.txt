@@ -1,0 +1,1 @@
+Time, 1.motherboard_state, 1.motherboard_position, 2.CPU_state, 2.CPU_position, 3.cooler_state, 3.cooler_position, 4.GPU_state, 4.GPU_position, 5.memory_card_state, 5.memory_card_position, 6.power_supply_state, 6.power_supply_position, 7.hard_disk_state, 7.hard_disk_position, 8.cover_state, 8.cover_position
