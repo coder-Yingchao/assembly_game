@@ -73,6 +73,10 @@ class ComputerAssemblyGame:
 
         self.num_parts = 26
         self.num_completed_parts = 0
+        self.reward_agent1_part1_step = 0
+        self.reward_agent1_part2_completion = 0
+        self.reward_agent1_part3_failAction = 0
+        self.reward_agent1_part4_fatigue = 0
 
     def next_round(self):
         # looks like similar to reset game except the acc_fatigue.
@@ -96,6 +100,8 @@ class ComputerAssemblyGame:
         self.target_x1 = self.target_y1 = self.target_x2 = self.target_y2 = None
         self.hand2_waiting_for_handover = False
         self.steps_hand1 = self.steps_hand2 = 0
+        self.num_completed_parts = 0
+
 
         # Re-initialize the game tree if necessary
         self.initialize_tree()
@@ -172,6 +178,13 @@ class ComputerAssemblyGame:
         # print('action1', action_hand1, 'action2', action_hand2)
         self.reward_agent1 = 0 # update it every action
         self.reward_agent2 = 0 # update it every action
+        self.reward_agent1_part1_step = 0
+        self.reward_agent1_part2_completion = 0
+        self.reward_agent1_part3_failAction = 0
+        self.reward_agent1_part4_fatigue = 0
+        self.reward_agent1_part1_step -=1
+        self.reward_agent1 -=1
+        self.reward_agent2 -=1
         if self.action_hand1 is None and action_hand1 !=-1 and action_hand1 !=0:
             self.action_hand1 = action_hand1
             if 1 <= action_hand1 <= self.num_parts:
@@ -198,8 +211,10 @@ class ComputerAssemblyGame:
             self.hand2_operate()
 
         self.update()
+        reward_agent1_parts =  [self.reward_agent1_part1_step,self.reward_agent1_part2_completion, self.reward_agent1_part3_failAction, self.reward_agent1_part4_fatigue]
 
-        return [self.reward_agent1, self.reward_agent2], self.terminated
+
+        return [self.reward_agent1, self.reward_agent2], self.terminated, reward_agent1_parts
     def hand1_operate (self):
         num_step = 0
         while True:
@@ -239,60 +254,6 @@ class ComputerAssemblyGame:
         print('cost:',cost)
         return 10 if cost >= 12 else -10
 
-    # def handle_case_interaction(self, hand_id):
-    #     """
-    #     hand1 assemble the object
-    #     hand2 move to the position of case and wait for handover
-    #     """
-    #     if hand_id == 1:
-    #         assemble_flag = False
-    #         # for comp in self.components:
-    #         for num_comp in range(len(self.components)):
-    #             comp = self.components[num_comp]
-    #             if comp.picked_up_by_hand1:
-    #                 self.states[comp.type]['position'] = (0, 0)
-    #                 comp.x, comp.y = (0, 0)
-    #                 comp.picked_up_by_hand1 = False
-    #                 self.states[comp.type]['state'] = 4  # in hand1
-    #                 leaf_node = self.find_leaf_by_name(self.root, comp.type)
-    #                 result = leaf_node.complete()
-    #                 # print('hand1 assemble')
-    #
-    #                 self.reward_agent1 += self.assemble_success_reward
-    #                 self.reward_agent2 = self.reward_agent2 + self.df.iloc[num_comp].sum() /20 *self.alpha + self.df.iloc[num_comp].max() *self.alpha
-    #                 # self.reward_agent1 += self.reward_assembly(comp)
-    #                 assemble_flag = True
-    #                 if comp.type == '8.cover':
-    #                     self.reward_agent1 += self.completion_reward
-    #                     self.reward_agent2 += self.completion_reward
-    #                     self.terminated = True
-    #         if not assemble_flag:
-    #             self.reward_agent1 += self.fail_action_reward
-    #     else:
-    #         assemble_flag = False
-    #         # for comp in self.components:
-    #         for num_comp in range(len(self.components)):
-    #             comp = self.components[num_comp]
-    #             if comp.picked_up_by_hand2:
-    #                 self.states[comp.type]['position'] = (0, 0)
-    #                 comp.x, comp.y = (0, 0)
-    #                 comp.picked_up_by_hand2 = False
-    #                 self.states[comp.type]['state'] = 4  # in hand2
-    #                 leaf_node = self.find_leaf_by_name(self.root, comp.type)
-    #                 result = leaf_node.complete()
-    #                 # print('hand2 assemble')
-    #
-    #                 self.reward_agent2 += self.assemble_success_reward
-    #                 assemble_flag = True
-    #                 if comp.type == '8.cover':
-    #                     self.reward_agent1 += self.completion_reward
-    #                     self.reward_agent2 += self.completion_reward
-    #
-    #                     self.terminated = True
-    #         if not assemble_flag:
-    #             self.reward_agent2 += self.fail_action_reward
-    #
-    #     # print(f"Hand {hand_id} interacted with the case.")
 
     def assemble_part(self, hand_id, num_comp):
         """
@@ -308,12 +269,13 @@ class ComputerAssemblyGame:
         if hand_id == 2:
             if not (self.human_capability[num_comp] == 1 and is_executable):
                 self.reward_agent2 += self.fail_action_reward
-                print('fail_action_reward')
+                print('human fail_action_reward')
                 return
         else:
             if not (self.robot_capability[num_comp] == 1 and is_executable):
                 self.reward_agent1 += self.fail_action_reward
-                print('fail_action_reward')
+                self.reward_agent1_part3_failAction += self.fail_action_reward
+                print('robot fail_action_reward')
                 return
 
         comp = self.components[num_comp]
@@ -338,12 +300,16 @@ class ComputerAssemblyGame:
                 self.accumulate_fatigue  =  self.accumulate_fatigue + self.df.iloc[num_comp]
                 punish_fatigue_reward = self.alpha * (self.accumulate_fatigue.sum()/20 + self.accumulate_fatigue.max() - old_acc_fatigue.sum()/20 - old_acc_fatigue.max())
                 self.reward_agent1 = self.reward_agent1 - punish_fatigue_reward
+                self.reward_agent1_part4_fatigue -= punish_fatigue_reward
+
 
             self.num_completed_parts += 1
-            # print('num_completed_parts', self.num_completed_parts)
+            # print('num_completed_parts', self.num_completed_parts, 'num_parts:', self.num_parts)
             if self.num_completed_parts == self.num_parts:
+                self.num_completed_parts = 0
                 self.reward_agent1 += self.completion_reward
                 self.reward_agent2 += self.completion_reward
+                self.reward_agent1_part2_completion += self.completion_reward
                 self.count_cycle += 1
                 if self.count_cycle == self.num_cycle:
                     self.terminated = True
@@ -352,6 +318,8 @@ class ComputerAssemblyGame:
         else:
             if hand_id ==1:
                 self.reward_agent1 += self.fail_action_reward
+                self.reward_agent1_part3_failAction += self.fail_action_reward
+
             else:
                 self.reward_agent2 += self.fail_action_reward
 
@@ -365,6 +333,7 @@ class ComputerAssemblyGame:
         if hand_id == 1:
             if self.human_capability[component_id]==0:
                 self.reward_agent1 += self.fail_action_reward
+                self.reward_agent1_part3_failAction += self.fail_action_reward
                 return
         else:
             if self.robot_capability[component_id]==0:
@@ -379,6 +348,8 @@ class ComputerAssemblyGame:
                     leaf_node.drop()
                     self.states[comp.type]['state'] = 1
                     self.reward_agent1 += self.fail_action_reward
+                    self.reward_agent1_part3_failAction += self.fail_action_reward
+
 
         else:
             for comp in self.components: # same to hand1, can't pick up two items.
@@ -407,6 +378,7 @@ class ComputerAssemblyGame:
             else:
                 if hand_id ==1:
                     self.reward_agent1 += self.fail_action_reward
+                    self.reward_agent1_part3_failAction += self.fail_action_reward
                 else:
                     self.reward_agent2 += self.fail_action_reward
 
@@ -414,6 +386,8 @@ class ComputerAssemblyGame:
             # print(f"Hand {hand_id} fail to pick up Component {component_id + 1}.")
             if hand_id == 1:
                 self.reward_agent1 += self.fail_action_reward
+                self.reward_agent1_part3_failAction += self.fail_action_reward
+
             else:
                 self.reward_agent2 += self.fail_action_reward
 
