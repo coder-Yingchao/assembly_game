@@ -11,7 +11,7 @@ class ComputerAssemblyGame:
         self.screen_width = 1500
         self.screen_height = 1000
         self.grid_size = 100  # 设置网格大小为100像素
-        self.num_cycle = 50
+        self.num_cycle = 1
         self.count_cycle = 0
 
 

@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
     test_collector = Collector(policy, test_envs, exploration_noise=True)
     # ======== tensorboard logging setup =========
-    log_path = os.path.join(args.logdir, "assemblygame_desktop_v11", "DQN_LSTM_2")
+    log_path = os.path.join(args.logdir, "assemblygame_desktop_v11", "DQN_LSTM_1")
     writer = SummaryWriter(log_path)
     # Assuming `acc_reward` is your accumulated reward for the episode and `global_step is a step counter
     writer.add_text("args", str(args))
@@ -162,9 +162,9 @@ if __name__ == "__main__":
     # Training
     # ======== Step 4: Callback functions setup =========
     def save_best_fn(policy):
-        os.makedirs(os.path.join("log", "assemblygame_desktop_v11", "DQN_LSTM_2"), exist_ok=True)
+        os.makedirs(os.path.join("log", "assemblygame_desktop_v11", "DQN_LSTM_1"), exist_ok=True)
 
-        model1_save_path = os.path.join("log", "assemblygame_desktop_v11", "DQN_LSTM_2", "policy.pth")
+        model1_save_path = os.path.join("log", "assemblygame_desktop_v11", "DQN_LSTM_1", "policy.pth")
         torch.save(policy.state_dict(), model1_save_path)
 
 
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         policy=policy,
         train_collector=train_collector,
         test_collector=test_collector,
-        max_epoch=2000,
+        max_epoch=1000,
         step_per_epoch=1000,
         step_per_collect=50,
         episode_per_test=10,
