@@ -107,8 +107,8 @@ if __name__ == "__main__":
     # api_test(env, num_cycles=1000, verbose_progress=False)
 
     # Convert the env to vector format and create a collector
-    envs = DummyVectorEnv([lambda: make_env() for _ in range(1)])
-    test_envs = DummyVectorEnv([lambda: make_env() for _ in range(1)])
+    envs = DummyVectorEnv([lambda: make_env() for _ in range(3)])
+    test_envs = DummyVectorEnv([lambda: make_env() for _ in range(2)])
 
     # Observation and action space
 
@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
     test_collector = Collector(policy, test_envs, exploration_noise=True)
     # ======== tensorboard logging setup =========
-    log_path = os.path.join(args.logdir, "assemblygame_desktop_v11", "DQN_LSTM_2")
+    log_path = os.path.join(args.logdir, "assemblygame_desktop_v11", "DQN_LSTM_50")
     writer = SummaryWriter(log_path)
     # Assuming `acc_reward` is your accumulated reward for the episode and `global_step is a step counter
     writer.add_text("args", str(args))
@@ -162,9 +162,9 @@ if __name__ == "__main__":
     # Training
     # ======== Step 4: Callback functions setup =========
     def save_best_fn(policy):
-        os.makedirs(os.path.join("log", "assemblygame_desktop_v11", "DQN_LSTM_2"), exist_ok=True)
+        os.makedirs(os.path.join("log", "assemblygame_desktop_v11", "DQN_LSTM_50"), exist_ok=True)
 
-        model1_save_path = os.path.join("log", "assemblygame_desktop_v11", "DQN_LSTM_2", "policy.pth")
+        model1_save_path = os.path.join("log", "assemblygame_desktop_v11", "DQN_LSTM_50", "policy.pth")
         torch.save(policy.state_dict(), model1_save_path)
 
 
